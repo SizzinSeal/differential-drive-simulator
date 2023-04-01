@@ -49,8 +49,9 @@ class Robot:
         self.body = graphics.Circle(graphics.Point(self.x, self.y), trackWidth/2)
         self.body.draw(win)
 
-    def initialize(self):
+    async def initialize(self):
         task = asyncio.create_task(self.updater())
+        await task
     
     ## Update the robot's position
     async def updater(self):
@@ -74,7 +75,6 @@ class Robot:
             self.theta += deltaTheta
             # update robot position on screen
             self.body.move(self.x - self.body.getCenter().getX(), self.y - self.body.getCenter().getY())
-            print(self.x, self.y, self.theta)
             # draw the wheels
             await asyncio.sleep(0.01)
     
