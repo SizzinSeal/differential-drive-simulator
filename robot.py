@@ -3,6 +3,7 @@ import asyncio
 import time
 import math
 import screeninfo
+import colorsys
 
 ## Get the primary monitor's resolution
 monitor = screeninfo.get_monitors()[0]
@@ -38,6 +39,7 @@ class Robot:
     ##
     ## returns {Robot} - the robot object
     def __init__(self, trackWidth, maxSpeed, x = 0, y = 0, theta = 0):
+        # robot properties
         self.trackWidth = trackWidth
         self.x = x
         self.y = y
@@ -46,9 +48,17 @@ class Robot:
         self.rightSpeed = 0
         self.lastTime = time.time()
         self.maxSpeed = maxSpeed
+        # draw robot
         self.body = graphics.Circle(graphics.Point(self.x, self.y), trackWidth/2)
+        self.leftWheel = graphics.Line(graphics.Point(0, 0), graphics.Point(0, 0))
+        self.rightWheel = graphics.Line(graphics.Point(0, 0), graphics.Point(0, 0))
         self.body.draw(win)
+        self.leftWheel.draw(win)
+        self.rightWheel.draw(win)
 
+    ## Initialize the robot
+    ##
+    ## This function must be called for the robot to update its position
     async def initialize(self):
         task = asyncio.create_task(self.updater())
         await task
@@ -76,6 +86,28 @@ class Robot:
             # update robot position on screen
             self.body.move(self.x - self.body.getCenter().getX(), self.y - self.body.getCenter().getY())
             # draw the wheels
+            # they are tangent to the circle which is the robot's body
+            # they have the same angle as the robot
+            # they scale with the speed of the left and right wheels
+
+            # calculate the location of the left wheel
+            leftWheelX1 = self.x - self.trackWidth/2 * math.cos(self.theta)
+            leftWheelY1 = self.y - self.trackWidth/2 * math.sin(self.theta)
+            leftWheelX2 = leftWheelX1 + self.leftSpeed * math.cos(self.theta + math.pi/2)
+            leftWheelY2 = leftWheelY1 + self.leftSpeed * math.sin(self.theta + math.pi/2)
+            self.leftWheel.undraw()
+            self.leftWheel = graphics.Line(graphics.Point(leftWheelX1, leftWheelY1), graphics.Point(leftWheelX2, leftWheelY2))
+            self.leftWheel.draw(win)
+            # calculate the location of the right wheel
+            rightWheelX1 = self.x + self.trackWidth/2 * math.cos(self.theta)
+            rightWheelY1 = self.y + self.trackWidth/2 * math.sin(self.theta)
+            rightWheelX2 = rightWheelX1 + self.rightSpeed * math.cos(self.theta + math.pi/2)
+            rightWheelY2 = rightWheelY1 + self.rightSpeed * math.sin(self.theta + math.pi/2)
+            self.rightWheel.undraw()
+            self.rightWheel = graphics.Line(graphics.Point(rightWheelX1, rightWheelY1), graphics.Point(rightWheelX2, rightWheelY2))
+            self.rightWheel.draw(win)
+
+            print(math.fmod(self.theta * 180 / math.pi, 360))
             await asyncio.sleep(0.01)
     
     ## Set the speed of the robot
