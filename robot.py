@@ -10,6 +10,9 @@ monitor = screeninfo.get_monitors()[0]
 win = graphics.GraphWin("Differential Drive Simulator", monitor.height/2, monitor.height/2)
 win.setCoords(-72, -72, 72, 72)
 
+def hsv2rgb(h,s,v):
+    return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h,s,v))
+
 
 ## Clamp a value in a range
 ##
@@ -52,6 +55,7 @@ class Robot:
         self.body = graphics.Circle(graphics.Point(self.x, self.y), trackWidth/2)
         self.leftWheel = graphics.Line(graphics.Point(0, 0), graphics.Point(0, 0))
         self.rightWheel = graphics.Line(graphics.Point(0, 0), graphics.Point(0, 0))
+        self.body.setWidth(3)
         self.body.draw(win)
         self.leftWheel.draw(win)
         self.rightWheel.draw(win)
@@ -79,35 +83,42 @@ class Robot:
             else:
                 chord = 2 * math.sin(deltaTheta / 2) * (deltaR / deltaTheta - self.trackWidth / 2)
             averageTheta = (deltaTheta / 2) + self.theta
-            # update robot position
+            # update position
             self.x += chord * -math.sin(averageTheta)
             self.y += chord * math.cos(averageTheta)
             self.theta += deltaTheta
-            # update robot position on screen
-            self.body.move(self.x - self.body.getCenter().getX(), self.y - self.body.getCenter().getY())
-            # draw the wheels
-            # they are tangent to the circle which is the robot's body
-            # they have the same angle as the robot
-            # they scale with the speed of the left and right wheels
 
             # calculate the location of the left wheel
             leftWheelX1 = self.x - self.trackWidth/2 * math.cos(self.theta)
             leftWheelY1 = self.y - self.trackWidth/2 * math.sin(self.theta)
             leftWheelX2 = leftWheelX1 + self.leftSpeed * math.cos(self.theta + math.pi/2)
             leftWheelY2 = leftWheelY1 + self.leftSpeed * math.sin(self.theta + math.pi/2)
-            self.leftWheel.undraw()
-            self.leftWheel = graphics.Line(graphics.Point(leftWheelX1, leftWheelY1), graphics.Point(leftWheelX2, leftWheelY2))
-            self.leftWheel.draw(win)
+            leftWheelP1 = graphics.Point(leftWheelX1, leftWheelY1)
+            leftWheelP2 = graphics.Point(leftWheelX2, leftWheelY2)
+            # calculate color of the left wheel
+            leftWheelColor = hsv2rgb(math.fabs(self.leftSpeed / self.maxSpeed / 2), 0.5, 1)
             # calculate the location of the right wheel
             rightWheelX1 = self.x + self.trackWidth/2 * math.cos(self.theta)
             rightWheelY1 = self.y + self.trackWidth/2 * math.sin(self.theta)
             rightWheelX2 = rightWheelX1 + self.rightSpeed * math.cos(self.theta + math.pi/2)
             rightWheelY2 = rightWheelY1 + self.rightSpeed * math.sin(self.theta + math.pi/2)
+            rightWheelP1 = graphics.Point(rightWheelX1, rightWheelY1)
+            rightWheelP2 = graphics.Point(rightWheelX2, rightWheelY2)
+            # calculate color of the right wheel
+            rightWheelColor = hsv2rgb(math.fabs(self.rightSpeed / self.maxSpeed / 2), 0.5, 1)
+            # update the robot's graphics
+            self.body.move(self.x - self.body.getCenter().getX(), self.y - self.body.getCenter().getY())
+            self.leftWheel.undraw()
             self.rightWheel.undraw()
-            self.rightWheel = graphics.Line(graphics.Point(rightWheelX1, rightWheelY1), graphics.Point(rightWheelX2, rightWheelY2))
+            self.leftWheel = graphics.Line(leftWheelP1, leftWheelP2)
+            self.rightWheel = graphics.Line(rightWheelP1, rightWheelP2)
+            self.leftWheel.setFill(graphics.color_rgb(leftWheelColor[0], leftWheelColor[1], leftWheelColor[2]))
+            self.rightWheel.setFill(graphics.color_rgb(rightWheelColor[0], rightWheelColor[1], rightWheelColor[2]))
+            self.leftWheel.setWidth(5)
+            self.rightWheel.setWidth(5)
+            self.leftWheel.draw(win)
             self.rightWheel.draw(win)
-
-            print(math.fmod(self.theta * 180 / math.pi, 360))
+            print(deltaTime)
             await asyncio.sleep(0.01)
     
     ## Set the speed of the robot
