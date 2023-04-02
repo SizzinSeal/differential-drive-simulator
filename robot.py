@@ -118,7 +118,6 @@ class Robot:
             self.rightWheel.setWidth(5)
             self.leftWheel.draw(win)
             self.rightWheel.draw(win)
-            print(deltaTime)
             await asyncio.sleep(0.01)
     
     ## Set the speed of the robot
